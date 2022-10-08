@@ -16,6 +16,7 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.List;
 /**
  * <p>
@@ -67,8 +68,10 @@ public class RpcMessageDecoder extends LengthFieldBasedFrameDecoder {
         //读取魔数
         byte[] magic = new byte[4];
         in.readBytes(magic);
+        checkMagicNumber(magic);
         //读取版本
         byte version = in.readByte();
+        checkVersion(version);
         //读取消息长度
         int bodyLength = in.readInt();
         //读取消息类型
@@ -115,5 +118,22 @@ public class RpcMessageDecoder extends LengthFieldBasedFrameDecoder {
         rpcMessage.setData(rpcResponse);
         log.info("length={},messageType={},codec={},compress={},requestId={},body={}",bodyLength,messageType,rpcMessage.getCodec(),rpcMessage.getCompress(),rpcMessage.getRequestId(),rpcMessage.getData());
         return rpcMessage;
+    }
+
+    private void checkVersion(byte version) {
+        // read the version and compare
+        if (version != RpcConstants.VERSION) {
+            throw new RuntimeException("version isn't compatible" + version);
+        }
+    }
+
+    private void checkMagicNumber(byte[] magic) {
+        // read the first 4 bit, which is the magic number, and compare
+        int len = RpcConstants.MAGIC_NUMBER.length;
+        for (int i = 0; i < len; i++) {
+            if (magic[i] != RpcConstants.MAGIC_NUMBER[i]) {
+                throw new IllegalArgumentException("Unknown magic code: " + Arrays.toString(magic));
+            }
+        }
     }
 }
