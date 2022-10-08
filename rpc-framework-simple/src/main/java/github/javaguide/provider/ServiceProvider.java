@@ -1,6 +1,7 @@
 package github.javaguide.provider;
 
 import github.javaguide.config.RpcServiceConfig;
+import github.javaguide.extension.SPI;
 
 /**
  * store and provide service object.
@@ -8,6 +9,7 @@ import github.javaguide.config.RpcServiceConfig;
  * @author shuang.kou
  * @createTime 2020年05月31日 16:52:00
  */
+@SPI
 public interface ServiceProvider {
 
     /**

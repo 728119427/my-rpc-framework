@@ -6,6 +6,7 @@ import github.javaguide.exception.RpcException;
 import github.javaguide.extension.ExtensionLoader;
 import github.javaguide.provider.ServiceProvider;
 import github.javaguide.registry.ServiceRegistry;
+import github.javaguide.remoting.transport.netty.server.NettyRpcServer;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -53,7 +54,7 @@ public class ZkServiceProviderImpl implements ServiceProvider {
         String rpcServiceName = rpcServiceConfig.getRpcServiceName();
         try {
             String ip = InetAddress.getLocalHost().getHostAddress();
-            serviceRegistry.registerService(rpcServiceName,new InetSocketAddress(ip,8081));
+            serviceRegistry.registerService(rpcServiceName,new InetSocketAddress(ip, NettyRpcServer.PORT));
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
