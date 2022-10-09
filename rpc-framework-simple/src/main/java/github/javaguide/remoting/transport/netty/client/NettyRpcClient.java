@@ -1,5 +1,8 @@
 package github.javaguide.remoting.transport.netty.client;
 
+import github.javaguide.remoting.dto.RpcRequest;
+import github.javaguide.remoting.transport.RpcRequestTransport;
+import lombok.extern.slf4j.Slf4j;
 import github.javaguide.enums.CompressTypeEnum;
 import github.javaguide.enums.SerializationTypeEnum;
 import github.javaguide.extension.ExtensionLoader;
@@ -31,6 +34,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
+
 /**
  * @Description TODO
  * @Author zhengdongyuan@hanyangtech.cn
@@ -45,7 +49,7 @@ public class NettyRpcClient implements RpcRequestTransport {
     private final Bootstrap bootstrap;
     private final EventLoopGroup eventLoopGroup;
 
-    public NettyRpcClient(){
+    public NettyRpcClient() {
         bootstrap = new Bootstrap();
         eventLoopGroup = new NioEventLoopGroup();
         bootstrap.group(eventLoopGroup)
@@ -58,7 +62,7 @@ public class NettyRpcClient implements RpcRequestTransport {
                         p.addLast(new RpcMessageEncoder());
                         p.addLast(new RpcMessageDecoder());
                         //如果客户端15秒内没有发生写操作，则会触发一个写空闲事件，nettyRpcClientHandler接收到写空闲，会向服务器发送一个ping心跳
-                        p.addLast(new IdleStateHandler(0,15,0, TimeUnit.SECONDS));
+                        p.addLast(new IdleStateHandler(0, 15, 0, TimeUnit.SECONDS));
                         p.addLast(new NettyRpcClientHandler());
                     }
                 });
@@ -70,20 +74,21 @@ public class NettyRpcClient implements RpcRequestTransport {
 
     /**
      * 客户端连接服务器
+     *
      * @param inetSocketAddress
      * @return
      */
     @SneakyThrows
-    public Channel doConnect(InetSocketAddress inetSocketAddress)  {
+    public Channel doConnect(InetSocketAddress inetSocketAddress) {
         CompletableFuture<Channel> channelCompletableFuture = new CompletableFuture<>();
         bootstrap.connect(inetSocketAddress).addListener((ChannelFutureListener) future -> {
-            if(future.isSuccess()){
-                log.info("The client has connected [{}] successfully! ",inetSocketAddress.toString());
+            if (future.isSuccess()) {
+                log.info("The client has connected [{}] successfully! ", inetSocketAddress.toString());
                 Channel channel = future.channel();
                 channel.closeFuture().addListener(future1 -> close());
                 channelCompletableFuture.complete(channel);
-            }else {
-                log.error("client connect [{}] fail!",inetSocketAddress.toString());
+            } else {
+                log.error("client connect [{}] fail!", inetSocketAddress.toString());
                 close();
             }
         });
@@ -92,14 +97,15 @@ public class NettyRpcClient implements RpcRequestTransport {
 
     /**
      * 获取客户端channel
+     *
      * @param inetSocketAddress
      * @return
      */
-    public Channel getChannel(InetSocketAddress inetSocketAddress){
+    public Channel getChannel(InetSocketAddress inetSocketAddress) {
         Channel channel = channelProvider.getChannel(inetSocketAddress);
-        if(channel==null){
-            channel=doConnect(inetSocketAddress);
-            channelProvider.set(inetSocketAddress,channel);
+        if (channel == null) {
+            channel = doConnect(inetSocketAddress);
+            channelProvider.set(inetSocketAddress, channel);
         }
         return channel;
     }
@@ -107,13 +113,14 @@ public class NettyRpcClient implements RpcRequestTransport {
 
     /**
      * 发送rpc请求
+     *
      * @param rpcRequest
      * @return
      */
     @Override
     public Object sendRpcRequest(RpcRequest rpcRequest) {
         CompletableFuture<RpcResponse<Object>> responseFuture = new CompletableFuture<>();
-        unprocessedRequests.add(rpcRequest.getRequestId(),responseFuture);
+        unprocessedRequests.add(rpcRequest.getRequestId(), responseFuture);
         //获取服务地址
         InetSocketAddress inetSocketAddress = serviceDiscovery.lookupService(rpcRequest);
         Channel channel = getChannel(inetSocketAddress);
@@ -124,15 +131,15 @@ public class NettyRpcClient implements RpcRequestTransport {
                 .compress(CompressTypeEnum.GZIP.getCode())
                 .data(rpcRequest).build();
         channel.writeAndFlush(rpcMessage).addListener(future -> {
-            if(!future.isSuccess()){
+            if (!future.isSuccess()) {
                 Throwable cause = future.cause();
-                log.error("send rpcRequest fail: {}",cause.getMessage());
+                log.error("send rpcRequest fail: {}", cause.getMessage());
             }
         });
         return responseFuture;
     }
 
-    public void close(){
+    public void close() {
         eventLoopGroup.shutdownGracefully();
     }
 }

@@ -5,6 +5,7 @@ import github.javaguide.factory.SingletonFactory;
 import github.javaguide.remoting.constants.RpcConstants;
 import github.javaguide.remoting.dto.RpcMessage;
 import github.javaguide.remoting.dto.RpcResponse;
+import github.javaguide.remoting.transport.netty.client.NettyRpcClient;
 import github.javaguide.remoting.transport.netty.codec.RpcMessageDecoder;
 import github.javaguide.remoting.transport.netty.codec.RpcMessageEncoder;
 import io.netty.buffer.ByteBuf;
@@ -48,5 +49,14 @@ public class MyTest1 {
 
         //decode
         embeddedChannel.writeInbound(buffer);
+    }
+
+    @Test
+    public void test3(){
+        Class<NettyRpcClient> nettyRpcClientClass = NettyRpcClient.class;
+        //System.out.println(nettyRpcClientClass.getDeclaringClass().getName());
+        System.out.println(nettyRpcClientClass.getSimpleName());
+        System.out.println(nettyRpcClientClass.getCanonicalName());
+        System.out.println(nettyRpcClientClass.getName());
     }
 }

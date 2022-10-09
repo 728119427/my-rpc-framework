@@ -1,5 +1,15 @@
 package github.javaguide.remoting.transport.netty.client;
 
+
+import github.javaguide.factory.SingletonFactory;
+import github.javaguide.remoting.constants.RpcConstants;
+import github.javaguide.remoting.dto.RpcMessage;
+import github.javaguide.remoting.dto.RpcRequest;
+import github.javaguide.remoting.dto.RpcResponse;
+import github.javaguide.remoting.transport.RpcRequestTransport;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import lombok.extern.slf4j.Slf4j;
 import github.javaguide.enums.CompressTypeEnum;
 import github.javaguide.enums.SerializationTypeEnum;
 import github.javaguide.factory.SingletonFactory;
@@ -13,7 +23,6 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.net.InetSocketAddress;
 
 /**
@@ -24,13 +33,17 @@ import java.net.InetSocketAddress;
 @Slf4j
 public class NettyRpcClientHandler extends SimpleChannelInboundHandler<RpcMessage> {
 
+
     private final UnprocessedRequests unprocessedRequests;
     private final NettyRpcClient nettyRpcClient;
 
     public NettyRpcClientHandler(){
-        this.unprocessedRequests = SingletonFactory.getInstance(UnprocessedRequests.class);
-        this.nettyRpcClient = SingletonFactory.getInstance(NettyRpcClient.class);
+        unprocessedRequests = SingletonFactory.getInstance(UnprocessedRequests.class);
+        nettyRpcClient = SingletonFactory.getInstance(NettyRpcClient.class);
     }
+
+
+
 
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, RpcMessage rpcMessage) throws Exception {
