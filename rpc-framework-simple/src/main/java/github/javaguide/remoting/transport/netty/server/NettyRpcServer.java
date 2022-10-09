@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.xml.transform.sax.SAXTransformerFactory;
+import java.net.InetAddress;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -57,6 +58,7 @@ public class NettyRpcServer {
             serverBootstrap.group(bossGroup,workerGroup)
                             .channel(NioServerSocketChannel.class)
                             .option(ChannelOption.SO_BACKLOG,128)
+                            .handler(new LoggingHandler(LogLevel.INFO))
                             .childHandler(new ChannelInitializer<SocketChannel>() {
                                 @Override
                                 protected void initChannel(SocketChannel ch) throws Exception {
@@ -67,10 +69,14 @@ public class NettyRpcServer {
                                     //心跳检测，30秒内没有接收到消息，触发读空闲，关闭客户端连接
                                     p.addLast(new IdleStateHandler(30,0,0, TimeUnit.SECONDS));
                                     p.addLast(new NettyRpcServerHandler());
+                                    p.addLast(new ClientQuitHandler());
                                 }
                             });
-            ChannelFuture channelFuture = serverBootstrap.bind(PORT).sync();
-            channelFuture.channel().close().sync();
+            String hostAddress = InetAddress.getLocalHost().getHostAddress();
+            ChannelFuture channelFuture = serverBootstrap.bind(hostAddress,PORT).sync();
+            log.info("server start success: [{}]",hostAddress+":"+PORT);
+            channelFuture.channel().closeFuture().sync();
+            log.info("server channel close: [{}]",hostAddress+":"+PORT);
         } catch (Exception e) {
             log.error("start server error: {}",e.getMessage());
             throw new RuntimeException(e);

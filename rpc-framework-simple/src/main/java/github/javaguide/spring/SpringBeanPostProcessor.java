@@ -5,6 +5,7 @@ import github.javaguide.config.RpcServiceConfig;
 import github.javaguide.extension.ExtensionLoader;
 import github.javaguide.factory.SingletonFactory;
 import github.javaguide.provider.ServiceProvider;
+import github.javaguide.proxy.RpcClientProxy;
 import github.javaguide.remoting.transport.netty.client.NettyRpcClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeansException;
@@ -46,7 +47,14 @@ public class SpringBeanPostProcessor implements BeanPostProcessor {
             if (declaredField.isAnnotationPresent(RpcReference.class)){
                 RpcReference annotation = declaredField.getAnnotation(RpcReference.class);
                 RpcServiceConfig rpcServiceConfig = RpcServiceConfig.builder().group(annotation.group()).version(annotation.version()).build();
-
+                RpcClientProxy rpcClientProxy = new RpcClientProxy(nettyRpcClient, rpcServiceConfig);
+                Object proxy = rpcClientProxy.getProxy(declaredField.getType());
+                declaredField.setAccessible(true);
+                try {
+                    declaredField.set(bean,proxy);
+                } catch (IllegalAccessException e) {
+                    log.error("Autowire rpcReference bean fail: "+e.getMessage());
+                }
 
             }
         }
